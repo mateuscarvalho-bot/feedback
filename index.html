@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Estudos ENARE</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Tab: Início -->
+        <div class="tab-content" id="tab-inicio">
+            <div class="container">
+                <h1>Dashboard de Estudos</h1>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total de Estudos</h3>
+                        <div class="stat-value" id="totalStudies">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Aproveitamento Médio</h3>
+                        <div class="stat-value" id="averageScore">0%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Revisões Pendentes</h3>
+                        <div class="stat-value" id="pendingReviews">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Questões Resolvidas</h3>
+                        <div class="stat-value" id="totalQuestions">0</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <h3>Performance por Disciplina</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <h3>Evolução Temporal</h3>
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Estudar -->
+        <div class="tab-content hidden" id="tab-estudar">
+            <div class="container">
+                <h1>Registrar Estudo</h1>
+                
+                <form id="studyForm" class="study-form">
+                    <div class="form-group">
+                        <label class="form-label" for="subject">Disciplina</label>
+                        <select class="form-control" id="subject" required>
+                            <option value="">Selecione uma disciplina</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="correct">Questões Certas</label>
+                            <input type="number" class="form-control" id="correct" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="total">Total de Questões</label>
+                            <input type="number" class="form-control" id="total" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="topic">Assunto</label>
+                        <select class="form-control" id="topic" required>
+                            <option value="">Selecione primeiro uma disciplina</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="customTopicGroup" style="display: none;">
+                        <label class="form-label" for="customTopic">Assunto Personalizado</label>
+                        <input type="text" class="form-control" id="customTopic" placeholder="Digite o assunto">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="date">Data da Realização</label>
+                        <input type="date" class="form-control" id="date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="observations">Observações</label>
+                        <textarea class="form-control" id="observations" rows="3" placeholder="Adicione observações sobre seu estudo..."></textarea>
+                    </div>
+
+                    <div id="reviewAlert" class="review-alert hidden">
+                        <div class="review-alert-content">
+                            <h4>📅 Revisão Detectada!</h4>
+                            <p>Este estudo corresponde a uma revisão agendada. Ela será automaticamente removida do cronograma.</p>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary btn--full-width">Registrar Estudo</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab: Cronograma -->
+        <div class="tab-content hidden" id="tab-cronograma">
+            <div class="container">
+                <h1>Cronograma de Revisões</h1>
+                
+                <div class="schedule-stats">
+                    <div class="schedule-stat">
+                        <span class="schedule-stat-label">Atrasadas</span>
+                        <span class="schedule-stat-value overdue" id="overdueCount">0</span>
+                    </div>
+                    <div class="schedule-stat">
+                        <span class="schedule-stat-label">Hoje</span>
+                        <span class="schedule-stat-value today" id="todayCount">0</span>
+                    </div>
+                    <div class="schedule-stat">
+                        <span class="schedule-stat-label">Próximas</span>
+                        <span class="schedule-stat-value upcoming" id="upcomingCount">0</span>
+                    </div>
+                </div>
+
+                <div class="schedule-controls">
+                    <button class="btn btn--secondary" id="updateSchedule">Atualizar Cronograma</button>
+                    <button class="btn btn--outline" id="clearOverdue">Limpar Atrasadas</button>
+                </div>
+
+                <div class="schedule-list" id="scheduleList">
+                    <!-- Schedule items will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Histórico -->
+        <div class="tab-content hidden" id="tab-historico">
+            <div class="container">
+                <h1>Histórico de Estudos</h1>
+                
+                <div class="history-filters">
+                    <div class="form-group">
+                        <label class="form-label" for="filterSubject">Filtrar por Disciplina</label>
+                        <select class="form-control" id="filterSubject">
+                            <option value="">Todas as disciplinas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="filterTopic">Filtrar por Assunto</label>
+                        <select class="form-control" id="filterTopic">
+                            <option value="">Todos os assuntos</option>
+                        </select>
+                    </div>
+                    <button class="btn btn--secondary" id="clearFilters">Limpar Filtros</button>
+                </div>
+
+                <div class="history-list" id="historyList">
+                    <!-- History items will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Configurações -->
+        <div class="tab-content hidden" id="tab-configuracoes">
+            <div class="container">
+                <h1>Configurações</h1>
+                
+                <!-- Seção: Gerenciar Dados -->
+                <div class="config-section">
+                    <h2>Gerenciar Dados</h2>
+                    <div class="config-actions">
+                        <button class="btn btn--primary" id="exportBtn">📤 Exportar Dados</button>
+                        <button class="btn btn--secondary" id="importBtn">📥 Importar Dados</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </div>
+                    <p class="config-description">Exporte seus dados para backup ou importe dados anteriores.</p>
+                </div>
+
+                <!-- Seção: Gerenciar Disciplinas -->
+                <div class="config-section">
+                    <h2>Gerenciar Disciplinas</h2>
+                    
+                    <!-- Formulário para adicionar nova disciplina -->
+                    <div class="add-subject-form">
+                        <h3>Adicionar Nova Disciplina</h3>
+                        <form id="addSubjectForm">
+                            <div class="form-group">
+                                <label class="form-label" for="newSubjectName">Nome da Disciplina</label>
+                                <input type="text" class="form-control" id="newSubjectName" required placeholder="Ex: Dermatologia">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="newSubjectSpecialty">Especialidade</label>
+                                <select class="form-control" id="newSubjectSpecialty" required>
+                                    <option value="">Selecione</option>
+                                    <option value="Clínica">Clínica</option>
+                                    <option value="Cirúrgica">Cirúrgica</option>
+                                    <option value="Outra">Outra</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="newSubjectTopics">Assuntos (separados por vírgula)</label>
+                                <textarea class="form-control" id="newSubjectTopics" required rows="3" placeholder="Ex: Eczema, Psoríase, Melanoma, Dermatite"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn--primary">Adicionar Disciplina</button>
+                        </form>
+                    </div>
+
+                    <!-- Lista de disciplinas existentes -->
+                    <div class="subjects-list-section">
+                        <h3>Disciplinas Existentes</h3>
+                        <div id="allSubjectsList" class="all-subjects-grid">
+                            <!-- Subjects will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção: Sobre -->
+                <div class="config-section">
+                    <h2>Sobre</h2>
+                    <div class="about-content">
+                        <h3>Sistema de Estudos ENARE</h3>
+                        <p><strong>Versão:</strong> 2.0</p>
+                        <p><strong>Funcionalidades:</strong></p>
+                        <ul>
+                            <li>Registro de estudos com sistema de performance</li>
+                            <li>Cronograma inteligente de revisões</li>
+                            <li>Dashboard com estatísticas e gráficos</li>
+                            <li>Histórico completo com filtros</li>
+                            <li>Gerenciamento de disciplinas personalizadas</li>
+                            <li>Exportação e importação de dados</li>
+                        </ul>
+                        <p><strong>Algoritmo de Revisões:</strong></p>
+                        <ul>
+                            <li>Performance Excelente (≥90%): próxima revisão em 14 dias</li>
+                            <li>Performance Boa (75-89%): próxima revisão em 7 dias</li>
+                            <li>Performance Regular (60-74%): próxima revisão em 4 dias</li>
+                            <li>Performance Fraca (<60%): próxima revisão em 2 dias</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" data-tab="inicio" class="nav-link active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Início</span>
+        </a>
+        <a href="#" data-tab="estudar" class="nav-link">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Estudar</span>
+        </a>
+        <a href="#" data-tab="cronograma" class="nav-link">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Cronograma</span>
+            <span id="reviewBadge" class="nav-badge">0</span>
+        </a>
+        <a href="#" data-tab="historico" class="nav-link">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Histórico</span>
+        </a>
+        <a href="#" data-tab="configuracoes" class="nav-link">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Config</span>
+        </a>
+    </nav>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirmar Exclusão</h3>
+            <p id="deleteMessage">Tem certeza que deseja excluir este item?</p>
+            <div class="modal-actions">
+                <button class="btn btn--outline" id="cancelDelete">Cancelar</button>
+                <button class="btn btn--primary" id="confirmDelete">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
